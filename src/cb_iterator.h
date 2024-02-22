@@ -13,12 +13,22 @@ namespace veryslot2 {
  * @tparam BufferType type of the circular buffer.
  */
 template <class BufferType, typename ValueType>
-class circular_buffer_iterator : public std::iterator<std::random_access_iterator_tag, ValueType> {
+class circular_buffer_iterator {
     friend BufferType;
 private:
     circular_buffer_iterator(BufferType* ptr, const size_t position)
         : m_ptr(ptr), m_position(position) {}
 public:
+    typedef std::random_access_iterator_tag iterator_category;
+    /// The type "pointed to" by the iterator.
+    typedef ValueType value_type;
+    /// Distance between iterators is represented as this type.
+    typedef ptrdiff_t difference_type;
+    /// This type represents a pointer-to-value_type.
+    typedef ValueType* pointer;
+    /// This type represents a reference-to-value_type.
+    typedef ValueType& reference;
+
     circular_buffer_iterator(const circular_buffer_iterator& other)
         : m_ptr(other.m_ptr), m_position(other.m_position) {}
     circular_buffer_iterator& operator=(const circular_buffer_iterator& other) {
@@ -48,7 +58,8 @@ public:
         return !(*this < other);
     }
     circular_buffer_iterator& operator++() {
-        m_position++;
+        if(m_position < m_ptr->m_capacity)
+            m_position++;
         return *this;
     }
     circular_buffer_iterator operator++(int) {

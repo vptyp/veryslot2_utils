@@ -1,30 +1,77 @@
 #include <iostream>
 #include "circular_buffer.h"
 #include <algorithm>
+#include <chrono>
 
 int main() {
-    veryslot2::circular_buffer<int> buffer(10);
-    for (int i = 0; i < 100; i++) {
-        if(i == 50) {
-            buffer.resize(100);
-        }
-        buffer.push_back(std::rand() % 100);
+    QVector<int> m(150);
+//    {
+        veryslot2::circular_buffer<int> buffer_test(100);
 
-        if( i % 10 == 0) {
-            std::cout << "value 5 found: ";
-            std::sort(buffer.begin(), buffer.end());
-            std::cout << *std::lower_bound(buffer.begin(), buffer.end(), 20);
-            std::cout << std::endl;
-            std::cout << "sorted array: ";
+        int counter = 0;
+        for (auto &part: m) {
+            part = counter++;
         }
-        for(int & it : buffer) {
-            std::cout << it << " ";
+
+        std::cout << buffer_test.insert_back(m.begin(),
+                                             m.end()) << std::endl;
+
+        for (int &val: buffer_test) {
+            std::cout << val << " ";
         }
-        if(i % 25 == 0) {
-            buffer.clear();
+
+        std::cout << std::endl << buffer_test.size() << std::endl;
+        std::cout << buffer_test.insert_back(m.begin() + 20,
+                                             m.begin() + 50) << std::endl;
+
+        for (int &val: buffer_test) {
+            std::cout << val << " ";
         }
-        std::cout << std::endl;
+
+        std::cout << std::endl << buffer_test.size() << std::endl;
+        std::cout << buffer_test.insert_back(m.begin() + 10,
+                                             m.begin() + 90) << std::endl;
+
+        for (int &val: buffer_test) {
+            std::cout << val << " ";
+        }
+
+        std::cout << std::endl << buffer_test.size() << std::endl;
+//    }
+//    veryslot2::circular_buffer<int> buffer_test(100);
+    std::vector<int> test(300);
+    for(auto& i : test){
+        static int t = 0;
+        i = t++;
     }
-    std::cout << "Hello, World!" << std::endl;
+
+    std::cout << buffer_test.insert_back(test.begin() + 0,
+                                         test.begin() + 50) << std::endl;
+
+    for(int & val : buffer_test){
+        std::cout << val << " ";
+    }
+
+    std::cout << std::endl << buffer_test.size() << std::endl;
+
+
+    veryslot2::circular_buffer<int> buffer_2(100);
+    std::cout << std::endl << buffer_2.insert_back(m.begin(),
+                                                   m.begin() + 150) << std::endl;
+
+    for(int & val : buffer_2){
+        std::cout << val << " ";
+    }
+
+    std::cout << std::endl << buffer_2.size() << std::endl;
+
+    std::sort(buffer_2.rbegin(), buffer_2.rend());
+
+    while(!buffer_2.empty()) {
+        int val;
+        buffer_2.pop_front(val);
+        std::cout << val << " ";
+    }
+
     return 0;
 }
