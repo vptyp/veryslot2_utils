@@ -1,4 +1,5 @@
 # Circular buffer
+[![Linux Build](https://github.com/vptyp/veryslot2_utils/actions/workflows/linux_build.yml/badge.svg)](https://github.com/vptyp/veryslot2_utils/actions/workflows/linux_build.yml) [![Coverage Status](https://coveralls.io/repos/github/vptyp/veryslot2_utils/badge.svg?branch=master)](https://coveralls.io/github/vptyp/veryslot2_utils?branch=master) 
 
 A circular buffer is a data structure that uses a single, fixed-size buffer as if it were connected end-to-end. This implementation based on the circular buffer from the boost library. And some other implementations from the internet.
 

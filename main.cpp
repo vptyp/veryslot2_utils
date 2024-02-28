@@ -6,37 +6,38 @@
 int main() {
     QVector<int> m(150);
 //    {
-        veryslot2::circular_buffer<int> buffer_test(100);
+    veryslot2::circular_buffer<int> buffer_test(100);
 
-        int counter = 0;
-        for (auto &part: m) {
-            part = counter++;
-        }
+    int counter = 0;
+    for (auto &part: m) {
+        part = counter++;
+    }
 
-        std::cout << buffer_test.insert_back(m.begin(),
-                                             m.end()) << std::endl;
+    std::cout << buffer_test.insert_back(m.begin(),
+                                         m.end()) << std::endl;
 
-        for (int &val: buffer_test) {
-            std::cout << val << " ";
-        }
+    veryslot2::circular_buffer<int> buffer_gtest(buffer_test);
+    for (int &val: buffer_test) {
+        std::cout << val << " ";
+    }
 
-        std::cout << std::endl << buffer_test.size() << std::endl;
-        std::cout << buffer_test.insert_back(m.begin() + 20,
-                                             m.begin() + 50) << std::endl;
+    std::cout << std::endl << buffer_test.size() << std::endl;
+    std::cout << buffer_test.insert_back(m.begin() + 20,
+                                         m.begin() + 50) << std::endl;
 
-        for (int &val: buffer_test) {
-            std::cout << val << " ";
-        }
+    for (int &val: buffer_test) {
+        std::cout << val << " ";
+    }
 
-        std::cout << std::endl << buffer_test.size() << std::endl;
-        std::cout << buffer_test.insert_back(m.begin() + 10,
-                                             m.begin() + 90) << std::endl;
+    std::cout << std::endl << buffer_test.size() << std::endl;
+    std::cout << buffer_test.insert_back(m.begin() + 10,
+                                         m.begin() + 90) << std::endl;
 
-        for (int &val: buffer_test) {
-            std::cout << val << " ";
-        }
+    for (int &val: buffer_test) {
+        std::cout << val << " ";
+    }
 
-        std::cout << std::endl << buffer_test.size() << std::endl;
+    std::cout << std::endl << buffer_test.size() << std::endl;
 //    }
 //    veryslot2::circular_buffer<int> buffer_test(100);
     std::vector<int> test(300);

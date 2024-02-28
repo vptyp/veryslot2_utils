@@ -33,13 +33,41 @@ public:
     circular_buffer() = delete;
     circular_buffer(iterator first, iterator last) = delete;
     circular_buffer(const_iterator first, const_iterator last) = delete;
-    circular_buffer(circular_buffer&&) noexcept = default;
-    circular_buffer& operator=(circular_buffer&&) noexcept = default;
+    circular_buffer(circular_buffer&& other) noexcept {
+        delete[] m_buffer;
+        m_capacity = other.m_capacity;
+        m_buffer = other.m_buffer;
+        m_head = other.m_head;
+        m_tail = other.m_tail;
+        isFull = other.isFull;
+        other.m_buffer = nullptr;
+        other.m_capacity = 0;
+        other.m_head = 0;
+        other.m_tail = 0;
+        other.isFull = false;
+    }
+    circular_buffer& operator=(circular_buffer&& other) noexcept {
+        if(this == &other) return *this;
+        delete[] m_buffer;
+        m_capacity = other.m_capacity;
+        m_buffer = other.m_buffer;
+        m_head = other.m_head;
+        m_tail = other.m_tail;
+        isFull = other.isFull;
+        other.m_buffer = nullptr;
+        other.m_capacity = 0;
+        other.m_head = 0;
+        other.m_tail = 0;
+        other.isFull = false;
+        return *this;
+    }
     circular_buffer(const circular_buffer& other)
-    : m_capacity(other.m_capacity), m_head(other.m_head), m_tail(other.m_tail)
+    : m_capacity(other.m_capacity), m_head(other.m_head),
+    m_tail(other.m_tail), isFull(other.isFull), safe(other.safe)
     {
         m_buffer = new T[m_capacity];
-        std::copy(other.begin(), other.end(), begin());
+        std::copy(other.m_buffer, other.m_buffer + other.m_capacity,
+                  m_buffer);
     }
     circular_buffer& operator=(const circular_buffer& other) {
         if(this == &other) return *this;
@@ -47,12 +75,18 @@ public:
         m_buffer = new T[m_capacity];
         m_head = other.m_head;
         m_tail = other.m_tail;
-        std::copy(other.begin(), other.end(), begin());
+        isFull = other.isFull;
+        std::copy(other.m_buffer, other.m_buffer +
+        other.m_capacity, m_buffer);
         return *this;
     }
     //circular_buffer(const QVector<T>&);
-    explicit circular_buffer(const size_t capacity) : m_capacity(capacity) {
-        m_buffer = new T[capacity]{0};
+    explicit circular_buffer(const size_t capacity) :
+    m_capacity(capacity)
+    {
+        if(m_capacity == 0)
+            throw std::invalid_argument("Capacity must be greater than 0");
+        m_buffer = new T[capacity]{T()};
     }
 
     ~circular_buffer() {
@@ -86,10 +120,16 @@ public:
 
     template <typename InputIterator>
     func_result insert_back(const InputIterator begin, const InputIterator end) noexcept {
-        for(auto it = begin; it != end; ++it) {
+        size_t skipped = 0;
+        for(auto it = begin; it != end; ++it, ++skipped) {
             if(push_back(*it)) return std::distance(begin, it);
         }
-        return 0;
+        return skipped > m_capacity ? skipped - m_capacity : 0;
+    }
+
+    func_result insert_back(const typename veryslot2::circular_buffer<T>::iterator begin,
+                            const typename veryslot2::circular_buffer<T>::iterator end) noexcept {
+        return private_insert_back(begin, end);
     }
 
     func_result insert_back(const typename QVector<T>::iterator begin,
@@ -105,8 +145,9 @@ public:
     template<typename InputIterator>
     void replace(InputIterator begin, InputIterator end, size_t position)
     {
+        size_t distance = 0;
         for(auto& it = begin; it != end; ++it) {
-            (*this)[position + it - begin] = *it;
+            (*this)[position + distance++] = *it;
         }
     }
 
@@ -131,11 +172,11 @@ public:
     }
 
     T& operator[](size_t index) const{
-        return m_buffer[(m_head + index) % size()];
+        return m_buffer[(m_head + index) % m_capacity];
     }
 
     T* at(size_t index) const{
-        return &m_buffer[(m_head + index) % size()];
+        return &m_buffer[(m_head + index) % m_capacity];
     }
 
     /**
@@ -163,7 +204,7 @@ public:
         In that case, we add the capacity to the tail to get the number of elements.
      * @return the number of elements in the buffer.
      */
-    [[nodiscard]] size_t size() const{
+    [[nodiscard]] size_t size() const {
         if(isFull) return m_capacity;
         if(m_tail >= m_head)
             return m_tail - m_head;
@@ -199,7 +240,7 @@ public:
     }
 
     void resize(size_t new_capacity) {
-        T* new_buffer = new T[new_capacity];
+        T* new_buffer = new T[new_capacity]{T()};
         size_t new_size = std::min(new_capacity, m_capacity);
         int idx = new_capacity - size();
         idx = idx < 0 ? 0 - idx : 0;
@@ -213,18 +254,22 @@ public:
         m_tail = new_size;
     }
 
+    [[nodiscard]] size_t capacity() const {
+        return m_capacity;
+    }
 private:
     template <typename RandomIterator>
-    func_result private_insert_back(const RandomIterator begin, const RandomIterator end) noexcept {
+    func_result private_insert_back(const RandomIterator begin,
+                                    const RandomIterator end) noexcept
+    {
         if (begin == end) return -1;
-        T* raw_ptr;
-        std::cout << "distance: " << std::distance(begin,end) << std::endl;
         if (std::distance(begin, end) >= m_capacity) {
-            auto moved_begin = begin + (std::distance(begin, end) - m_capacity);
+            auto moved_begin = begin +
+                    (std::distance(begin, end) - m_capacity);
             std::copy(moved_begin, end, m_buffer);
             m_tail = m_head = 0;
             isFull = true;
-            return end - m_capacity - begin + 1;
+            return end - m_capacity - begin;
         }
         size_t len = std::distance(begin, end);
         size_t from_tail = m_capacity - m_tail;
