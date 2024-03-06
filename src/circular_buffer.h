@@ -264,7 +264,6 @@ public:
             return -1;
         }
         value = m_buffer[m_head];
-        m_buffer[m_head] = -1;
         m_head = (m_head + 1) % m_capacity;
         isFull = false;
         return 0;
@@ -350,8 +349,8 @@ public:
         m_buffer = new_buffer;
         m_capacity = new_capacity;
         m_head = 0;
-        //incorrect
-        m_tail = new_size;
+        m_tail = new_size % new_capacity;
+        isFull = m_tail == m_head;
     }
 
     [[nodiscard]] size_t capacity() const {

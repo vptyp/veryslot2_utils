@@ -268,6 +268,7 @@ TEST(Methods, Empty) {
     EXPECT_TRUE(buffer2.empty());
 }
 
+
 TEST(Methods, BeginEnd) {
     veryslot2::circular_buffer<int> buffer(100);
     for(int i = 0; i < 100; i++){
@@ -317,6 +318,30 @@ TEST(Methods, BeginEnd) {
             EXPECT_EQ(buffer[i], temp[i + 50]);
         } else {
             EXPECT_EQ(buffer[i], 0);
+        }
+    }
+
+    constexpr size_t iterations = 10000;
+    size_t current = 0;
+    std::random_device rd;  // a seed source for the random number engine
+    std::mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> distrib(20, 500);
+    veryslot2::circular_buffer<unsigned char> str_buffer(100);
+    for(size_t i = 0; i < 100; ++i){
+        str_buffer.push_back('A' + i % 25);
+    }
+    while(current++ < iterations) {
+        auto new_size = distrib(gen);
+        veryslot2::circular_buffer<unsigned char> old(str_buffer);
+        str_buffer.resize(new_size);
+        auto rcur = str_buffer.rbegin();
+        auto rold = old.rbegin();
+        while(rcur != str_buffer.rend() && rold != old.rend()){
+            EXPECT_EQ(*rcur++, *rold++);
+        }
+        str_buffer.clear();
+        for(size_t i = 0; i < str_buffer.capacity(); ++i){
+            str_buffer.push_back('A' + i % 25);
         }
     }
 
