@@ -2,6 +2,7 @@
 #include <QVector>
 #include <list>
 #include "circular_buffer.h"
+#include <random>
 
 TEST(Constructor, DefaultConstructor) {
     veryslot2::circular_buffer<int> buffer(100);
@@ -164,6 +165,35 @@ TEST(Methods, InsertBack) {
     }
     EXPECT_EQ(notEqual, 1);
 
+    constexpr size_t iterations = 10000;
+    size_t current = 0;
+    std::random_device rd;  // a seed source for the random number engine
+    std::mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
+    std::uniform_int_distribution<> distrib(1, 100);
+
+    while(current++ < iterations){
+        auto clean = distrib(gen);
+        for(int j = 0; j < clean; ++j){
+            int val = -2, first = buffer[0];
+            if(buffer.pop_front(val) != 0){
+                clean = j + 1;
+                goto brk;
+            }
+            EXPECT_EQ(val, first);
+        }
+        brk:
+        auto insert = distrib(gen);
+        std::vector<int> i_arr(insert);
+        for(int j = 0; j < insert; j++)
+            i_arr[j] = j;
+        veryslot2::circular_buffer<int> before(buffer);
+        buffer.insert_back(i_arr.begin(), i_arr.end());
+        auto rcur = buffer.rbegin();
+        auto rvec = i_arr.rbegin();
+        while(rcur != buffer.rend() && rvec != i_arr.rend()){
+            EXPECT_EQ(*rcur++, *rvec++);
+        }
+    }
 }
 
 TEST(Methods, Safety){

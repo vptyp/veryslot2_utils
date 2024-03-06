@@ -5,11 +5,114 @@
 #ifndef CIRCULARBUFFER_H
 #define CIRCULARBUFFER_H
 #include <vector>
-#include "cb_iterator.h"
 #include <QVector>
-#include <iostream>
+#include <iterator>
 
 namespace veryslot2 {
+
+/**
+* @brief STL compliant iterator for circular buffer. Implements random access iterator.
+* @tparam ValueType type of the value in the circular buffer.
+* @tparam BufferType type of the circular buffer.
+*/
+template <class BufferType, typename ValueType>
+class circular_buffer_iterator {
+    friend BufferType;
+private:
+    circular_buffer_iterator(BufferType* ptr, const size_t position)
+            : m_ptr(ptr), m_position(position) {}
+public:
+    typedef std::random_access_iterator_tag iterator_category;
+    /// The type "pointed to" by the iterator.
+    typedef ValueType value_type;
+    /// Distance between iterators is represented as this type.
+    typedef ptrdiff_t difference_type;
+    /// This type represents a pointer-to-value_type.
+    typedef ValueType* pointer;
+    /// This type represents a reference-to-value_type.
+    typedef ValueType& reference;
+
+    circular_buffer_iterator(const circular_buffer_iterator& other)
+            : m_ptr(other.m_ptr), m_position(other.m_position) {}
+    circular_buffer_iterator& operator=(const circular_buffer_iterator& other) {
+        if(this == &other)
+            return *this;
+
+        m_ptr = other.m_ptr;
+        m_position = other.m_position;
+        return *this;
+    }
+    bool operator==(const circular_buffer_iterator& other) const {
+        return m_ptr == other.m_ptr && m_position == other.m_position;
+    }
+    bool operator!=(const circular_buffer_iterator& other) const {
+        return !(*this == other);
+    }
+    bool operator<(const circular_buffer_iterator& other) const {
+        return m_position < other.m_position;
+    }
+    bool operator>(const circular_buffer_iterator& other) const {
+        return other < *this;
+    }
+    bool operator<=(const circular_buffer_iterator& other) const {
+        return !(other < *this);
+    }
+    bool operator>=(const circular_buffer_iterator& other) const {
+        return !(*this < other);
+    }
+    circular_buffer_iterator& operator++() {
+        if(m_position < m_ptr->m_capacity)
+            m_position++;
+        return *this;
+    }
+    circular_buffer_iterator operator++(int) {
+        circular_buffer_iterator tmp(*this);
+        operator++();
+        return tmp;
+    }
+    circular_buffer_iterator& operator--() {
+        m_position--;
+        return *this;
+    }
+    circular_buffer_iterator operator--(int) {
+        circular_buffer_iterator tmp(*this);
+        operator--();
+        return tmp;
+    }
+    circular_buffer_iterator& operator+=(const size_t offset) {
+        m_position += offset;
+        return *this;
+    }
+    circular_buffer_iterator& operator-=(const size_t offset) {
+        m_position -= offset;
+        return *this;
+    }
+    circular_buffer_iterator operator+(const size_t offset) const {
+        circular_buffer_iterator tmp(*this);
+        return tmp += offset;
+    }
+    circular_buffer_iterator operator-(const size_t offset) const {
+        circular_buffer_iterator tmp(*this);
+        return tmp -= offset;
+    }
+    size_t operator-(const circular_buffer_iterator& other) const {
+        return m_position - other.m_position;
+    }
+    ValueType& operator*() const {
+        return (*m_ptr)[m_position];
+    }
+    ValueType* operator->() const {
+        return &operator*();
+    }
+    ValueType& operator[](const size_t offset) const {
+        return (*m_ptr)[m_position + offset];
+    }
+
+private:
+    BufferType* m_ptr;
+    size_t m_position;
+};
+
     /**
      * @brief A circular buffer is a data structure that uses a single, fixed-size buffer as if it were connected end-to-end.
      * This implementation based on the circular buffer from the boost library. And some other implementations from the internet.
@@ -122,7 +225,7 @@ public:
     func_result insert_back(const InputIterator begin, const InputIterator end) noexcept {
         size_t skipped = 0;
         for(auto it = begin; it != end; ++it, ++skipped) {
-            if(push_back(*it)) return std::distance(begin, it);
+            this->push_back(*it);
         }
         return skipped > m_capacity ? skipped - m_capacity : 0;
     }
@@ -166,6 +269,7 @@ public:
             return -1;
         }
         value = m_buffer[m_head];
+        m_buffer[m_head] = -1;
         m_head = (m_head + 1) % m_capacity;
         isFull = false;
         return 0;
@@ -251,6 +355,7 @@ public:
         m_buffer = new_buffer;
         m_capacity = new_capacity;
         m_head = 0;
+        //incorrect
         m_tail = new_size;
     }
 
@@ -262,7 +367,7 @@ private:
     func_result private_insert_back(const RandomIterator begin,
                                     const RandomIterator end) noexcept
     {
-        if (begin == end) return -1;
+        if (begin >= end) return -1;
         if (std::distance(begin, end) >= m_capacity) {
             auto moved_begin = begin +
                     (std::distance(begin, end) - m_capacity);
@@ -280,8 +385,8 @@ private:
             m_tail = len - from_tail;
         } else {
             std::copy(begin, end, m_buffer + m_tail);
-            tail_to_head(m_tail + len, len);
-            m_tail += len;
+            tail_to_head((m_tail + len) % m_capacity, len);
+            m_tail = (m_tail + len) % m_capacity;
         }
         isFull = m_head == m_tail;
         return 0;
@@ -308,8 +413,6 @@ private:
     bool safe = false;
     bool isFull = false;
 };
-
-
 
 }
 
