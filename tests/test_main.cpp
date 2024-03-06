@@ -321,6 +321,12 @@ TEST(Methods, BeginEnd) {
         }
     }
 
+    buffer.clear();
+    buffer.resize(1000);
+    EXPECT_EQ(buffer.empty(), true);
+    EXPECT_EQ(buffer.size(), 0);
+    EXPECT_EQ(buffer.capacity(), 1000);
+
     constexpr size_t iterations = 10000;
     size_t current = 0;
     std::random_device rd;  // a seed source for the random number engine

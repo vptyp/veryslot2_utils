@@ -339,7 +339,7 @@ public:
 
     void resize(size_t new_capacity) {
         T* new_buffer = new T[new_capacity]{T()};
-        size_t new_size = std::min(new_capacity, m_capacity);
+        size_t new_size = std::min(new_capacity, size());
         int idx = new_capacity - size();
         idx = idx < 0 ? 0 - idx : 0;
         for (size_t i = 0; i < new_size; i++) {
@@ -350,7 +350,7 @@ public:
         m_capacity = new_capacity;
         m_head = 0;
         m_tail = new_size % new_capacity;
-        isFull = m_tail == m_head;
+        isFull = isFull & (m_tail == m_head);
     }
 
     [[nodiscard]] size_t capacity() const {
