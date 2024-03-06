@@ -202,13 +202,8 @@ public:
      * @return 0 if done, -1 if buffer is full and safe mode is on.
      */
     func_result push_back(const T& value) noexcept{
-        if(safe && isFull) return -1;
-        m_buffer[m_tail] = value;
-        // buffer is full
-        m_head = (m_head + isFull) % m_capacity;
-        m_tail = (m_tail + 1) % m_capacity;
-        isFull = m_tail == m_head;
-        return 0;
+        auto temp = value;
+        return push_back(std::move(temp));
     }
 
     func_result push_back(T&& value) noexcept{
